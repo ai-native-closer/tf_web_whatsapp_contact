@@ -1,0 +1,16 @@
+ALTER TABLE wa_conversations
+  ADD COLUMN lead_level ENUM('A', 'B', 'C') NULL AFTER last_synced_at,
+  ADD COLUMN lead_reason TEXT NULL AFTER lead_level,
+  ADD COLUMN lead_evidence_json JSON NULL AFTER lead_reason,
+  ADD COLUMN lead_confidence DECIMAL(5,4) NULL AFTER lead_evidence_json,
+  ADD COLUMN lead_score_status ENUM('unscored', 'pending', 'scoring', 'scored', 'failed', 'disabled', 'manual') NOT NULL DEFAULT 'unscored' AFTER lead_confidence,
+  ADD COLUMN lead_score_error TEXT NULL AFTER lead_score_status,
+  ADD COLUMN lead_scored_at DATETIME NULL AFTER lead_score_error,
+  ADD COLUMN lead_score_signature CHAR(64) NULL AFTER lead_scored_at,
+  ADD COLUMN lead_manual_locked TINYINT(1) NOT NULL DEFAULT 0 AFTER lead_score_signature,
+  ADD COLUMN lead_manual_note TEXT NULL AFTER lead_manual_locked,
+  ADD COLUMN lead_manual_user_id BIGINT UNSIGNED NULL AFTER lead_manual_note,
+  ADD COLUMN lead_manual_at DATETIME NULL AFTER lead_manual_user_id,
+  ADD KEY idx_wa_conversations_lead_level (lead_level),
+  ADD KEY idx_wa_conversations_lead_status (lead_score_status),
+  ADD CONSTRAINT fk_wa_conversations_lead_manual_user FOREIGN KEY (lead_manual_user_id) REFERENCES wa_admin_users(id) ON DELETE SET NULL;

@@ -1,0 +1,27 @@
+{
+  "name": "whatsapp-contact-manager",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Multi-account WhatsApp contact management platform.",
+  "main": "server/src/index.js",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "migrate": "node server/src/migrate.js",
+    "start": "node server/src/index.js",
+    "build": "npm --prefix frontend install && npm --prefix frontend run build",
+    "serve:built": "npm run build && npm start",
+    "test": "node --test server/test/*.test.js",
+    "check": "node --check server/src/*.js server/src/routes/*.js && npm test && npm --prefix frontend run build"
+  },
+  "dependencies": {
+    "@whiskeysockets/baileys": "7.0.0-rc13",
+    "bcryptjs": "^2.4.3",
+    "cookie-parser": "^1.4.7",
+    "express": "^4.19.2",
+    "express-session": "^1.18.0",
+    "mysql2": "^3.11.0",
+    "pino": "9.6.0"
+  }
+}

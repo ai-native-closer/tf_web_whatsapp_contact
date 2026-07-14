@@ -1,0 +1,67 @@
+CREATE TABLE IF NOT EXISTS wa_conversations (
+  id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  account_id BIGINT UNSIGNED NOT NULL,
+  chat_id VARCHAR(120) NOT NULL,
+  contact_phone VARCHAR(32) NULL,
+  contact_name VARCHAR(180) NULL,
+  last_message_text TEXT NULL,
+  last_message_type VARCHAR(40) NULL,
+  last_message_direction ENUM('inbound', 'outbound') NULL,
+  last_message_at DATETIME NULL,
+  unread_count INT UNSIGNED NOT NULL DEFAULT 0,
+  history_cursor_at DATETIME NULL,
+  has_more TINYINT(1) NOT NULL DEFAULT 1,
+  last_synced_at DATETIME NULL,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  UNIQUE KEY uk_wa_conversations_account_chat (account_id, chat_id),
+  KEY idx_wa_conversations_account_last (account_id, last_message_at),
+  CONSTRAINT fk_wa_conversations_account FOREIGN KEY (account_id) REFERENCES wa_accounts(id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS wa_messages (
+  id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  account_id BIGINT UNSIGNED NOT NULL,
+  conversation_id BIGINT UNSIGNED NOT NULL,
+  message_id VARCHAR(180) NOT NULL,
+  chat_id VARCHAR(120) NOT NULL,
+  sender_id VARCHAR(120) NULL,
+  recipient_id VARCHAR(120) NULL,
+  direction ENUM('inbound', 'outbound') NOT NULL,
+  message_type VARCHAR(40) NOT NULL DEFAULT 'chat',
+  body LONGTEXT NULL,
+  has_media TINYINT(1) NOT NULL DEFAULT 0,
+  media_mime_type VARCHAR(120) NULL,
+  media_filename VARCHAR(240) NULL,
+  media_size BIGINT UNSIGNED NULL,
+  media_metadata LONGTEXT NULL,
+  wa_timestamp DATETIME NOT NULL,
+  job_id BIGINT UNSIGNED NULL,
+  job_item_id BIGINT UNSIGNED NULL,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  UNIQUE KEY uk_wa_messages_account_message (account_id, message_id),
+  KEY idx_wa_messages_conversation_time (conversation_id, wa_timestamp),
+  KEY idx_wa_messages_account_chat_time (account_id, chat_id, wa_timestamp),
+  KEY idx_wa_messages_job_item (job_item_id),
+  CONSTRAINT fk_wa_messages_account FOREIGN KEY (account_id) REFERENCES wa_accounts(id),
+  CONSTRAINT fk_wa_messages_conversation FOREIGN KEY (conversation_id) REFERENCES wa_conversations(id) ON DELETE CASCADE,
+  CONSTRAINT fk_wa_messages_job FOREIGN KEY (job_id) REFERENCES wa_send_jobs(id) ON DELETE SET NULL,
+  CONSTRAINT fk_wa_messages_job_item FOREIGN KEY (job_item_id) REFERENCES wa_send_job_items(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS wa_message_sync_state (
+  id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  account_id BIGINT UNSIGNED NOT NULL,
+  status ENUM('idle', 'running', 'failed') NOT NULL DEFAULT 'idle',
+  last_initial_sync_at DATETIME NULL,
+  last_error TEXT NULL,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  UNIQUE KEY uk_wa_message_sync_state_account (account_id),
+  CONSTRAINT fk_wa_message_sync_state_account FOREIGN KEY (account_id) REFERENCES wa_accounts(id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
