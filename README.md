@@ -65,7 +65,7 @@ Baileys 通过 WhatsApp Web 的多设备 WebSocket 协议工作，不启动 Chro
 ```bash
 kubectl -n ok-backend create secret generic tf-web-whatsapp-contact-test-config \
   --from-file=default.json=/secure/path/test.default.json
-kubectl -n ok-backend create secret generic tf-web-whatsapp-contact-config \
+kubectl -n ok-backend create secret generic tf-web-whatsapp-contact-secrets \
   --from-file=default.json=/secure/path/prod.default.json
 ```
 

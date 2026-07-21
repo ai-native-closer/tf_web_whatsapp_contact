@@ -9,8 +9,7 @@ metadata:
 spec:
   accessModes:
     - ReadWriteOnce
+  storageClassName: alicloud-disk-topology-alltype
   resources:
     requests:
       storage: 5Gi
-  # Set storageClassName when the cluster has no default StorageClass.
-  # storageClassName: alicloud-disk-essd

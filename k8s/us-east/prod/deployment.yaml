@@ -62,7 +62,7 @@ spec:
       volumes:
         - name: app-config
           secret:
-            secretName: tf-web-whatsapp-contact-config
+            secretName: tf-web-whatsapp-contact-secrets
         - name: whatsapp-data
           persistentVolumeClaim:
             claimName: tf-web-whatsapp-contact-data
