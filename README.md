@@ -60,17 +60,21 @@ Baileys 通过 WhatsApp Web 的多设备 WebSocket 协议工作，不启动 Chro
 ## QuickDeploy / 阿里云部署
 
 仓库已包含 QuickDeploy 所需的 `Dockerfile`、`aliyun-api.yaml` 以及
-`k8s/us-east/` 清单。先在目标命名空间创建对应环境的配置 Secret：
+`k8s/us-east/` 清单。测试环境继续以 `default.json` 文件挂载配置；生产环境将
+Secret 的每个 Key 作为环境变量注入容器，便于单独更新密码和各项配置：
 
 ```bash
 kubectl -n ok-backend create secret generic tf-web-whatsapp-contact-test-config \
   --from-file=default.json=/secure/path/test.default.json
 kubectl -n ok-backend create secret generic tf-web-whatsapp-contact-secrets \
-  --from-file=default.json=/secure/path/prod.default.json
+  --from-env-file=/secure/path/prod.env
 ```
 
-配置文件需将 `whatsapp.authDataPath` 设为
-`/app/storage/baileys_auth`；示例见 `k8s/us-east/*/secret.example.yaml`。
+生产环境变量示例见 `k8s/us-east/prod/secret.example.yaml`；至少要填写
+`APP_SESSION_SECRET`、`APP_DB_HOST`、`APP_DB_USER`、`APP_DB_PASSWORD`、
+`APP_DB_NAME`、`APP_ADMIN_PASSWORD`。`APP_WHATSAPP_AUTH_DATA_PATH` 必须为
+`/app/storage/baileys_auth`。测试环境配置文件和示例仍见
+`k8s/us-east/test/secret.example.yaml`。
 部署清单会创建各环境独立的持久卷声明，用于保存 WhatsApp 登录凭据。
 如集群没有默认 StorageClass，请在对应 `pvc.yaml` 中设置
 `storageClassName` 后再部署。

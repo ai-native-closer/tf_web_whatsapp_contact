@@ -52,17 +52,13 @@ spec:
             limits:
               cpu: "1"
               memory: 1Gi
+          envFrom:
+            - secretRef:
+                name: tf-web-whatsapp-contact-secrets
           volumeMounts:
-            - name: app-config
-              mountPath: /app/server/config/default.json
-              subPath: default.json
-              readOnly: true
             - name: whatsapp-data
               mountPath: /app/storage
       volumes:
-        - name: app-config
-          secret:
-            secretName: tf-web-whatsapp-contact-secrets
         - name: whatsapp-data
           persistentVolumeClaim:
             claimName: tf-web-whatsapp-contact-data
