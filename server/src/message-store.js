@@ -102,8 +102,7 @@ class MessageStore {
         VALUES (?, ?, ?, ?, 1)
         ON DUPLICATE KEY UPDATE
           contact_phone = COALESCE(VALUES(contact_phone), contact_phone),
-          contact_name = COALESCE(VALUES(contact_name), contact_name),
-          updated_at = NOW()
+          contact_name = COALESCE(VALUES(contact_name), contact_name)
       `,
       [accountId, chatId, phone, name]
     );
@@ -265,7 +264,7 @@ class MessageStore {
         FROM wa_conversations conversation
         JOIN wa_accounts account ON account.id = conversation.account_id
         WHERE ${where}
-        ORDER BY conversation.last_message_at DESC, conversation.updated_at DESC
+        ORDER BY conversation.last_message_at DESC, conversation.id DESC
         LIMIT 200
       `,
       params
@@ -290,7 +289,7 @@ class MessageStore {
           conversation.account_id,
           account.display_name AS account_name,
           account.phone_hint AS own_whatsapp_phone,
-          conversation.updated_at,
+          conversation.last_message_at AS updated_at,
           conversation.chat_id,
           conversation.contact_phone,
           conversation.contact_name,
@@ -304,7 +303,7 @@ class MessageStore {
           GROUP BY conversation_id
         ) first_outbound ON first_outbound.conversation_id = conversation.id
         WHERE ${where}
-        ORDER BY conversation.updated_at DESC
+        ORDER BY conversation.last_message_at DESC, conversation.id DESC
         LIMIT 500
       `,
       params

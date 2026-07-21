@@ -893,7 +893,7 @@ export default function App() {
                 <thead>
                   <tr>
                     <th>我方 WhatsApp 号</th>
-                    <th>更新时间</th>
+                    <th>最近消息时间</th>
                     <th>公司名称/商家名称</th>
                     <th>WhatsApp 账号/手机号</th>
                     <th>B 端所在城市</th>
