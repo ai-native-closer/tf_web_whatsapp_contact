@@ -232,7 +232,7 @@ function LoginView({ onLogin }: { onLogin: (user: User) => void }) {
     <div className="login-shell">
       <form className="login-panel" onSubmit={submit}>
         <div>
-          <p className="eyebrow">TF Web WhatsApp Contact</p>
+          <p className="eyebrow">WhatsApp Contact</p>
           <h1>建联工作台</h1>
         </div>
         <label>
@@ -591,7 +591,7 @@ export default function App() {
     <div className="app-shell">
       <header className="topbar">
         <div>
-          <p className="eyebrow">TF Web WhatsApp Contact</p>
+          <p className="eyebrow">WhatsApp Contact</p>
           <h1>建联工作台</h1>
         </div>
         <div className="topbar-actions">
