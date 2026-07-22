@@ -19,7 +19,7 @@ import {
   UserPlus,
   XCircle
 } from "lucide-react";
-import { FormEvent, ReactNode, useEffect, useMemo, useState } from "react";
+import { FormEvent, ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import { QRCodeSVG } from "qrcode.react";
 import { Account, Conversation, ConversationDetail, Job, JobDetail, LeadLevel, ReachListRow, User, api } from "./api";
 
@@ -266,6 +266,9 @@ export default function App() {
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [reachRows, setReachRows] = useState<ReachListRow[]>([]);
   const [conversationDetail, setConversationDetail] = useState<ConversationDetail | null>(null);
+  const [selectedConversationId, setSelectedConversationId] = useState<number | null>(null);
+  const selectedConversationIdRef = useRef<number | null>(null);
+  const conversationRequestRef = useRef(0);
   const [olderLoading, setOlderLoading] = useState(false);
   const [activeLoginAccountId, setActiveLoginAccountId] = useState<number | null>(null);
   const [pairingPhone, setPairingPhone] = useState("");
@@ -310,7 +313,7 @@ export default function App() {
   ]);
 
   async function refreshAll(selectedJobId?: number | null) {
-    const openedConversationId = conversationDetail?.conversation.id;
+    const openedConversationId = selectedConversationIdRef.current;
     const [accountResult, jobResult, conversationResult, reachResult] = await Promise.all([
       api.accounts(),
       api.jobs(),
@@ -333,7 +336,8 @@ export default function App() {
 
     if (openedConversationId && conversationResult.conversations.some((conversation) => conversation.id === openedConversationId)) {
       try {
-        setConversationDetail(await api.conversationMessages(openedConversationId));
+        const detail = await api.conversationMessages(openedConversationId);
+        if (selectedConversationIdRef.current === openedConversationId) setConversationDetail(detail);
       } catch {
         setConversationDetail(null);
       }
@@ -371,7 +375,11 @@ export default function App() {
   }
 
   async function openConversation(conversationId: number) {
+    const requestId = ++conversationRequestRef.current;
+    selectedConversationIdRef.current = conversationId;
+    setSelectedConversationId(conversationId);
     const detail = await api.conversationMessages(conversationId);
+    if (requestId !== conversationRequestRef.current) return;
     setConversationDetail(detail);
     const [conversationResult, reachResult] = await Promise.all([api.conversations(), api.reachList()]);
     setConversations(conversationResult.conversations);
@@ -785,7 +793,7 @@ export default function App() {
                 ) : (
                   conversations.map((conversation) => (
                     <button
-                      className={`conversation-row ${conversationDetail?.conversation.id === conversation.id ? "conversation-row-active" : ""}`}
+                      className={`conversation-row ${selectedConversationId === conversation.id ? "conversation-row-active" : ""}`}
                       key={conversation.id}
                       onClick={() => runAction(async () => openConversation(conversation.id))}
                     >

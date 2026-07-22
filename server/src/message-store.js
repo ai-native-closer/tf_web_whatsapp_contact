@@ -429,6 +429,38 @@ class MessageStore {
     );
   }
 
+  async applyLidMapping(accountId, lidChatId, phoneChatId) {
+    const connection = await this.pool.getConnection();
+    try {
+      await connection.beginTransaction();
+      await connection.execute(
+        `INSERT INTO wa_lid_mappings (account_id, lid_chat_id, phone_chat_id)
+         VALUES (?, ?, ?)
+         ON DUPLICATE KEY UPDATE phone_chat_id = VALUES(phone_chat_id)`,
+        [accountId, lidChatId, phoneChatId]
+      );
+      const [rows] = await connection.execute(
+        `SELECT * FROM wa_conversations WHERE account_id = ? AND chat_id IN (?, ?) FOR UPDATE`,
+        [accountId, lidChatId, phoneChatId]
+      );
+      const lid = rows.find((row) => row.chat_id === lidChatId);
+      const phone = rows.find((row) => row.chat_id === phoneChatId);
+      if (lid && phone && lid.id !== phone.id) {
+        await connection.execute("UPDATE wa_messages SET conversation_id = ?, chat_id = ? WHERE conversation_id = ?", [phone.id, phoneChatId, lid.id]);
+        await connection.execute("UPDATE wa_send_job_items SET chat_id = ? WHERE job_id IN (SELECT id FROM wa_send_jobs WHERE account_id = ?) AND chat_id = ?", [phoneChatId, accountId, lidChatId]);
+        await connection.execute("UPDATE wa_conversations SET unread_count = unread_count + ?, updated_at = NOW() WHERE id = ?", [lid.unread_count, phone.id]);
+        await connection.execute("DELETE FROM wa_conversations WHERE id = ?", [lid.id]);
+      } else if (lid && !phone) {
+        await connection.execute("UPDATE wa_conversations SET chat_id = ?, contact_phone = COALESCE(contact_phone, ?) WHERE id = ?", [phoneChatId, phoneFromChatId(phoneChatId), lid.id]);
+        await connection.execute("UPDATE wa_messages SET chat_id = ? WHERE conversation_id = ?", [phoneChatId, lid.id]);
+      }
+      await connection.commit();
+    } catch (error) {
+      await connection.rollback();
+      throw error;
+    } finally { connection.release(); }
+  }
+
   async setAccountSyncState(accountId, status, error) {
     await this.pool.execute(
       `

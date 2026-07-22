@@ -217,6 +217,16 @@ class WhatsAppManager {
         console.warn(`[whatsapp] history status update failed: ${error.message}`);
       });
     });
+
+    socket.ev.on("lid-mapping.update", (mapping) => {
+      const lid = mapping && mapping.lid;
+      const pn = mapping && mapping.pn;
+      if (this.isActive(runtime, socket) && lid && pn && String(lid).endsWith("@lid") && phoneFromChatId(pn)) {
+        this.messageStore.applyLidMapping(runtime.dbId, lid, toChatId(phoneFromChatId(pn))).catch((error) => {
+          console.warn(`[whatsapp] LID mapping merge failed: ${error.message}`);
+        });
+      }
+    });
   }
 
   async handleConnectionUpdate(runtime, socket, update, baileys) {
