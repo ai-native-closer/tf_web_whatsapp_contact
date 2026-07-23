@@ -115,9 +115,26 @@ class MessageStore {
     return rows[0];
   }
 
+  async resolveMappedChatId(accountId, chatId) {
+    if (!String(chatId || "").endsWith("@lid")) {
+      return chatId;
+    }
+
+    const [rows] = await this.pool.execute(
+      `SELECT phone_chat_id
+       FROM wa_lid_mappings
+       WHERE account_id = ? AND lid_chat_id = ?
+       LIMIT 1`,
+      [accountId, chatId]
+    );
+
+    return rows[0]?.phone_chat_id || chatId;
+  }
+
   async saveWhatsAppMessage(accountId, message, options = {}) {
     const messageId = normalizeMessageId(message);
-    const chatId = options.chatId || chatIdFromMessage(message);
+    const originalChatId = options.chatId || chatIdFromMessage(message);
+    const chatId = await this.resolveMappedChatId(accountId, originalChatId);
     if (!messageId || !chatId || !isDirectChatId(chatId)) {
       return null;
     }
