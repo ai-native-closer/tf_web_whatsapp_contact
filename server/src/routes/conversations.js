@@ -89,7 +89,7 @@ function serializeReachRow(row) {
     accountName: row.account_name,
     ownWhatsappPhone: row.own_whatsapp_phone,
     updatedAt: row.updated_at,
-    companyName: "",
+    companyName: row.contact_name || "",
     peerWhatsappAccount: peerPhone || "",
     peerCity: "",
     peerSource: "",
@@ -167,6 +167,30 @@ function createConversationsRouter(pool, manager, messageStore, jobQueue, leadCl
 
     const rows = await messageStore.listReachRows(accountId);
     res.json({ rows: rows.map(serializeReachRow) });
+  }));
+
+  router.patch("/:id/contact", asyncHandler(async (req, res) => {
+    const conversation = await getConversationOrThrow(messageStore, req.params.id);
+    const { account } = await getCurrentAccount(pool, manager, false);
+    if (Number(conversation.account_id) !== Number(account.id)) {
+      throw badRequest("Conversation does not belong to the current account");
+    }
+
+    const contactName = String(req.body.contactName || "").trim();
+    if (contactName.length > 180) {
+      throw badRequest("Contact name must be 180 characters or fewer");
+    }
+
+    const updated = await messageStore.setContactName(conversation.id, contactName || null);
+    await writeAudit(pool, {
+      actorUserId: req.session.user.id,
+      action: "set_contact_name",
+      entityType: "wa_conversation",
+      entityId: conversation.id,
+      detail: { hasContactName: Boolean(contactName) }
+    });
+
+    res.json({ conversation: serializeConversation(updated || conversation) });
   }));
 
   router.post("/:id/lead-score", asyncHandler(async (req, res) => {

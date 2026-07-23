@@ -33,6 +33,7 @@ function serializeItem(row) {
     id: row.id,
     jobId: row.job_id,
     recipientPhone: row.recipient_phone,
+    contactName: row.contact_name || null,
     chatId: row.chat_id,
     status: row.status,
     attemptCount: row.attempt_count,
@@ -72,10 +73,15 @@ async function getJobDetail(pool, id) {
     `
       SELECT
         item.*,
+        conversation.contact_name,
         reply.body AS latest_reply_text,
         reply.wa_timestamp AS latest_reply_at,
-        reply.conversation_id
+        COALESCE(reply.conversation_id, conversation.id) AS conversation_id
       FROM wa_send_job_items item
+      JOIN wa_send_jobs job ON job.id = item.job_id
+      LEFT JOIN wa_conversations conversation
+        ON conversation.account_id = job.account_id
+        AND (conversation.chat_id = item.chat_id OR (item.chat_id IS NULL AND conversation.contact_phone = item.recipient_phone))
       LEFT JOIN wa_messages reply ON reply.id = (
         SELECT message.id
         FROM wa_messages message

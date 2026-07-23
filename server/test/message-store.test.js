@@ -52,3 +52,21 @@ test("does not query LID mappings for a phone-based chat", async () => {
 
   assert.equal(await store.resolveMappedChatId(7, "8613800138000@s.whatsapp.net"), "8613800138000@s.whatsapp.net");
 });
+
+test("updates the shared contact name on the existing conversation", async () => {
+  const calls = [];
+  const store = new MessageStore({
+    execute: async (sql, params) => {
+      calls.push({ sql, params });
+      if (sql.includes("SELECT")) {
+        return [[{ id: 12, contact_name: "采购负责人" }]];
+      }
+      return [{ affectedRows: 1 }];
+    }
+  }, {});
+
+  const conversation = await store.setContactName(12, "采购负责人");
+
+  assert.deepEqual(calls[0].params, ["采购负责人", 12]);
+  assert.equal(conversation.contact_name, "采购负责人");
+});

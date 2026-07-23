@@ -284,6 +284,7 @@ export default function App() {
   const [retryLimit, setRetryLimit] = useState(1);
   const [manualLeadLevel, setManualLeadLevel] = useState<LeadLevel>("B");
   const [manualLeadNote, setManualLeadNote] = useState("");
+  const [contactNameDraft, setContactNameDraft] = useState("");
 
   const currentAccount = useMemo(() => accounts.find((account) => account.isCurrent), [accounts]);
   const activeLoginAccount = useMemo(
@@ -301,13 +302,16 @@ export default function App() {
     if (!conversationDetail) {
       setManualLeadLevel("B");
       setManualLeadNote("");
+      setContactNameDraft("");
       return;
     }
 
     setManualLeadLevel(conversationDetail.conversation.leadLevel || "B");
     setManualLeadNote(conversationDetail.conversation.leadManualNote || "");
+    setContactNameDraft(conversationDetail.conversation.contactName || "");
   }, [
     conversationDetail?.conversation.id,
+    conversationDetail?.conversation.contactName,
     conversationDetail?.conversation.leadLevel,
     conversationDetail?.conversation.leadManualNote
   ]);
@@ -440,6 +444,17 @@ export default function App() {
       });
       await applyConversationUpdate(result.conversation);
     }, "线索等级已解除锁定");
+  }
+
+  async function saveContactName() {
+    if (!conversationDetail) {
+      return;
+    }
+
+    await runAction(async () => {
+      const result = await api.updateConversationContactName(conversationDetail.conversation.id, contactNameDraft);
+      await applyConversationUpdate(result.conversation);
+    }, "联系人备注已保存");
   }
 
   useEffect(() => {
@@ -834,6 +849,18 @@ export default function App() {
                         加载更早
                       </TextIconButton>
                     </div>
+                    <div className="contact-name-editor">
+                      <input
+                        aria-label="联系人备注"
+                        placeholder="联系人备注名"
+                        value={contactNameDraft}
+                        onChange={(event) => setContactNameDraft(event.target.value)}
+                        maxLength={180}
+                      />
+                      <TextIconButton title="保存联系人备注" onClick={saveContactName} tone="primary">
+                        保存备注
+                      </TextIconButton>
+                    </div>
                     <div className="lead-panel">
                       <div className="lead-summary">
                         <span>{leadStatusText(conversationDetail.conversation)}</span>
@@ -1048,7 +1075,7 @@ export default function App() {
                 <div className="item-list">
                   {jobDetail.items.map((item) => (
                     <div className="item-row" key={item.id}>
-                      <span>{item.recipientPhone}</span>
+                      <span>{item.contactName || item.recipientPhone}</span>
                       <StatusBadge value={item.status} />
                       {item.latestReplyText && <span className="reply-chip">回复：{item.latestReplyText}</span>}
                       {item.conversationId && (

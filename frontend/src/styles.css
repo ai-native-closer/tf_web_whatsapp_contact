@@ -841,6 +841,20 @@ h3 {
   padding: 7px 9px;
 }
 
+.contact-name-editor {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 16px 12px;
+  border-bottom: 1px solid #e5ebe7;
+}
+
+.contact-name-editor input {
+  max-width: 300px;
+  min-height: 36px;
+  padding: 7px 9px;
+}
+
 .message-list {
   max-height: 340px;
   display: grid;

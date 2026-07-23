@@ -376,6 +376,19 @@ class MessageStore {
     );
   }
 
+  async setContactName(conversationId, contactName) {
+    await this.pool.execute(
+      `
+        UPDATE wa_conversations
+        SET contact_name = ?, updated_at = NOW()
+        WHERE id = ?
+      `,
+      [contactName || null, conversationId]
+    );
+
+    return this.getConversation(conversationId);
+  }
+
   async setManualLeadLevel(conversationId, level, note, userId, manualLocked) {
     const normalizedLevel = String(level || "").trim().toUpperCase();
     const normalizedNote = String(note || "").trim() || null;

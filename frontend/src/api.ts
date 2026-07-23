@@ -59,6 +59,7 @@ export type JobItem = {
   id: number;
   jobId: number;
   recipientPhone: string;
+  contactName: string | null;
   chatId: string | null;
   status: string;
   attemptCount: number;
@@ -236,6 +237,11 @@ export const api = {
     request<ConversationDetail>("/conversations", {
       method: "POST",
       body: JSON.stringify(payload)
+    }),
+  updateConversationContactName: (id: number, contactName: string) =>
+    request<{ conversation: Conversation }>(`/conversations/${id}/contact`, {
+      method: "PATCH",
+      body: JSON.stringify({ contactName })
     }),
   conversationMessages: (id: number, markRead = true) =>
     request<ConversationDetail>(`/conversations/${id}/messages?markRead=${markRead ? "true" : "false"}`),
